@@ -1,0 +1,342 @@
+---
+title: "Neha Anwer_HW2_5:45 PM"
+author: "Neha Anwer"
+date: "February 24, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+#Executive Summary
+
+This study measures the affects of several economic factors on Income inequality. Ten economic variables are hypothesized to cause changes in the Gini Index, a measure of inequality. Several models are tested which include indicators such as Gross National Income per capita, gross enrollment ratio of a country, unempoyment and many more. A panel of 62 countries were included in this study with data from the year 2010. The World Bank is the primary source of data for this report. The results show some unexpected trends in the data and also some predictable ones. 
+
+#Introduction
+
+Income equality is at the center of numerous debates in the political and economic realm, largely due to it's policy implications. As an attempt to discuss this phenomenon mathematically, the Gini coefficient was created in 1912 by the Italian statistician Corrado Gini. The Gini coefficient is a ratio that ranged from 0 to 1. The Gini index is the Gini Coefficient as a percentage, ranging from 0 to 100, in which 100 represents perfect inequality and 0 represents perfect equality(cite).  The purpose of this study is to the determine what factors influence the Gini Index across countries.  
+
+
+```{r, echo=FALSE}
+
+######## Table of Contents ########
+
+# Data Dictionary 
+# Step 1: Import/clean Data
+# Step 2: Exploratory Data Analysis
+# Step 3: Model Building 
+# Step 4: Results Visualizations
+# Step 5: Regression Assumptions
+
+
+########### Data Dictionary #############
+#1 GINI: Target variable, as percentage
+#2 Age Dependency Ratio : Calculated as dependants (unable to work due to age)/ working populatiom
+#3 Tax: Tax Revenue as % of GDP
+#4 Savings: % of GNI        
+#5 Unemployment: Unemployment Rate
+#6 Income: Gross National Income per capia
+#7 Education: Gross Enrollment Ratio
+#8 Services: Services as percentage of GDP(in LCU)
+#9 manu: Manufacturing, value added (in LCU)
+
+
+```
+
+#Data 
+
+All data used in this report was downloaded from the World Band Data Depository. Initially, the sample of explanatory variables included about 170 countries however due to several missing values in the Gini Index data, it has been reduced to 61 countries. All indicators are from the year 2010 because that year had the most GINI values.  The countries included in this study are: 
+
+[1] "Argentina"          "Australia"          "Austria"            "Belgium"            "Bangladesh"        
+ [6] "Bulgaria"           "Belarus"            "Canada"             "Switzerland"        "Colombia"          
+[11] "Costa Rica"         "Cyprus"             "Czech Republic"     "Germany"            "Denmark"           
+[16] "Dominican Republic" "Egypt, Arab Rep."   "Spain"              "Estonia"            "Finland"           
+[21] "France"             "United Kingdom"     "Georgia"            "Greece"             "Honduras"          
+[26] "Croatia"            "Hungary"            "Ireland"            "Iceland"            "Italy"             
+[31] "Kazakhstan"         "Korea, Rep."        "Lithuania"          "Luxembourg"         "Latvia"            
+[36] "Moldova"            "Mexico"             "Macedonia, FYR"     "Mongolia"           "Netherlands"       
+[41] "Norway"             "Pakistan"           "Peru"               "Poland"             "Portugal"          
+[46] "Paraguay"           "West Bank and Gaza" "Romania"            "El Salvador"        "Serbia"            
+[51] "Slovak Republic"    "Slovenia"           "Sweden"             "Thailand"           "Tunisia"           
+[56] "Turkey"             "Ukraine"            "Uruguay"            "United States"      "Vietnam"           
+[61] "Zambia"
+
+###Variable Descriptions
+
+Nine variables were considered for this study, excluding the response variable. 
+1. Gini Index(%): The response variable. The Gini Index is a measure of income inequality which is the variable of interest.  This data was estimated by the World Bank Development Research Group.
+
+2. Age Dependency Ratio (Age): The age of a population can have an impact on the income inequality within a country. One study found that the median age of a population is inversely related to the GINI Coefficient meaning that older populations are more unequal(Colninger). However, median age data was not available, so age dependency ratio was used instead. The Age dependency ratio is essentially a comparison between the number of dependents in a country's population and the working population. The ratio measures is expressed as number of dependents in a population divided the working population in a country. Data are shown as the proportion of dependents per 100 working-age population and are estimated by World Bank staff. It is calculated as follows: 
+
+    $\frac{Number of Dependants}{Working population(Ages 15-64)}$ $*100$
+
+
+*expressed as Age in the data set
+
+3. Tax(%): Politicians often argue over tax policy partially  because aside from generating government revenue, an additional purpose of tax revenue is the redistribution of wealth. The indicator "Tax on income, profits and capital gains as a percentage of revenue" was used as a measure of the effects of the tax in a country. Essentially, it represents tax as a percentage of GDP. This data is originally from the International Monetary Fund's data base and was added to the World Bank Depository.
+
+4. Savings(%): Gross savings as a percentage of Gross National Income. This data was collected by World Bank National accounts and the OECD.
+
+5. Unemployment(%): National estimate of unemployment, as percentage of a labor force. This data was gathered by the International Labor Market. 
+
+6. Income: Gross National Income per capita in current USD. GNI was used instead of GDP because it measures all income earned by residents of a country regardless of where it was earned geographically. This data was collected by World Bank National accounts and the OECD.
+
+7. Education: Lack of education is a barrier to earnings, hence a population with a high variance in education can potentially have larger income inequality. This variable is expressed as the gross enrollment Ratio of both sexes, regardless of age and was calculated by the UNESCO Institute of Statistics.
+
+8. Services: The services variable represents value added to the service sector, across all industries, in current local currency. The intuition behind adding this measure was to see if the value of a country's service industry impacts income inequality. This data was collected by World Bank National accounts and the OECD.
+
+9. Manufacturing. The manufacturing variable represents value added to the manufacturing sector, across all industries, in current local currency. The intuition behind adding this variable was the same as that of the services variable. This data was collected by World Bank National accounts and the OECD.
+
+10. Gender: Gender inequality in a country could contribute to more one income households and lack of job opportunities for women which in turn could potentially impact the income inequality level of a country. Initially, the gender inequality index was used however there was not enough data for this indicator so it was dropped. Following gender inequality, an attempt was made to use female unemployment as a measure of gender inequality in the labor force however that proved insignificant and  was withdrawn from the analysis. 
+
+```{r, echo=FALSE}
+
+###############################
+## Step 1: Import/Clean Data ## 
+###############################
+
+###Import Gini Data
+gini <- read.csv("API_SI.POV.GINI_DS2_en_csv_v2.csv", header = T, sep = ",", stringsAsFactors = F, comment.char = "\'")
+
+
+#for loop for which year has the most observations
+count = NULL
+for (i in 5:ncol(gini)){ # Begin for loop, Gini Index starts at column 5
+  
+  count[i] = sum(is.na(gini[,i]))
+  
+}# End for loop
+
+#which.max(count)   #Column 5 has most NAs 
+#which.min(count)   #Column 55 has minimum NAs(2010) 
+
+##Import Variables 
+age <- read.csv("Age Dependency.csv", header = T, sep =",", stringsAsFactors = F)
+tax <- read.csv("Tax Rate.csv", header = T, sep ="\t", stringsAsFactors = F)
+savings <- read.csv("Savings.csv", header = T, sep ="\t", stringsAsFactors = F)
+unemp <- read.csv("Unemployment.csv", header = T, sep ="\t", stringsAsFactors = F)
+income <- read.csv("GNI Dolars.csv", header = T, sep ="\t", stringsAsFactors = F)  
+edu <- read.csv("Gross Enrollment.csv", header = T, sep =",", stringsAsFactors = F)
+services <- read.csv("Services LCU.csv", header = T, sep ="\t", stringsAsFactors = F)
+manu <- read.csv("Manufacturing LCU.csv", header = T, sep ="\t", stringsAsFactors = F)
+
+
+### Delete columns, only keep country code and 2010 data because it has most observations
+temp <- c(1,55)
+gini <- gini[,temp]    # 2010 is col 55, keep year that has most GINI data
+age <- age[,temp]
+tax <- tax[,temp]
+savings <- savings[,temp]
+unemp <- unemp[,temp]
+income <- income[,temp]
+edu <- edu[,temp]
+services <- services[,temp]
+manu <- manu[,temp]
+
+
+### Combine all variables into dataframe 
+data <- data.frame(gini,age, tax, savings, unemp, income, edu, services,manu)
+
+# Delete every other column because country code is repeated, keep first country code column
+temp <- c(1,seq(2,18, by =2))
+data <- data[,temp]
+
+#rename columns
+colnames(data) <- c("Coutry Name","GINI", "age", "tax","savings","unemp","income","edu","services","manu")   
+# Remove missing values
+data <- data[complete.cases(data),]   ## Reduced from 264 to 62
+
+# Remove extra variables from workspace 
+rm(age,edu,gini,income,manu,savings,services,tax,unemp,count,temp)
+
+```
+
+### Explanatory Data Analysis 
+
+```{r, echo = FALSE}
+##########################################
+## Step 2: Explanatory variable Analysis # 
+##########################################
+
+## Normal Quantile Plots
+par(mar = c(4,4,4,4))
+#qqnorm(data$age, main = "Age Dependancy Ratio Normal Quantile Plot", col ="purple")
+#qqline(data$age)
+#qqnorm(data$tax, main = "Tax Normal Quantile Plot")
+#qqline(data$tax)
+#qqnorm(data$savings, main = "Savings Normal Quantile Plot")
+#qqline(data$savings)
+#qqnorm(data$unemp, main = "Unemployment Normal Quantile Plot")
+#qqline(data$unemp)
+qqnorm(data$income, main = "GNI/capita Normal Quantile Plot")
+qqline(data$income)
+#qqnorm(data$edu, main = "Education(gross enrollment) Normal Quantile Plot")  ## awful
+#qqline(data$edu)
+qqnorm(data$services, main = "Services in LCU")  #slightly heavy-tailed
+qqline(data$services)
+#qqnorm(data$manu, main = "Manufacturing, value added in LCU")    ##awful
+#qqline(data$manu)
+
+# Correlation Matrix of explanatory variables
+#pairs(data[,c("age","tax","savings","unemp","income","edu","services","manu")])
+
+# Correlation Table of all variables
+temp <- as.matrix(data[,-1])
+cor.matrix <- cor(temp)
+```
+
+Most of the variables have approximately normal distributions however a few of them are quite problematic. The Savings, Manufacturing, Income, and Services do not approach a normal dsitribution. The services and manufacturing distributions are in local currency which explains why the issues with their distribution.  The income distribution is right skewed and heavy-tailed which could cause problems in the analysis. Lastly, the savings variable is slightly heavy-tailed but is not too bad overall and can be used as is.
+
+## Model Bulding 
+
+
+The correlation matrix above shows the pearson correlation values of all variables and their plots. Some concerning coefficients are between savings and education, savings and services, and possibly age and education. However, since manufacturing and services have a problematic distributions and are highly correlated with each other(0.97), they will not be added to the model and thus are not a cause for concern. Furthermore, age, income, and education show a promising correlation with the dependant variable.
+
+A backwards stepwise regression approach was used starting with the initial model which includes: age, tax, savings, income, and education. All t-tests and F-tests were conducted with an alpha of 0.05 %. The initial model passed the F-test of overall significance at the 95% significance level and all variables passed the t-test for individual significance at the 95% significane level except savings and unemployment. Additionally the model has 55 degrees of freedom and an Adjusted R2 of 49.8%. However, since savings was insignificant, it was dropped and the resulting model had a higher Adjusted R2 of 50.47%. Once again, tax was still insignificant and thus a transformation was applied. Both the tax and income variables were transformed because as you may recall, the income variable is quite heavy-tailed and right skewed and the tax variable shows a potentially curved relationship with the dependant variable. The Tax variable was squared and the a natural log transformation was applied to the income variable. Plots of both variables' transformations are presented below. The relationship between the square of tax and Gini is more linear than with the original variable however there are still some extreme points and the relationship is very weak. This is not surprising because the correlation between the transformed variable and the response variable is still 0.13(same as the original variable). The log of income and Gini have a correlation coefficient of -0.45 which is fairy close to the original variables' correlation coefficient. Although applying a transformation to income yeilds a better distribution, it is important to note that it is still right skewed. 
+
+Carrying on with the analysis revealed that the unemployment variable continally did not pass the t-test for individual significance at the 95% significance level and thus was dropped. Log of income and the square of tax were both significant at the 95% level along with age and education. However, since square of tax is difficult to interpret, a model was created without it and a partial F-test was conducted to determine if the model with the square of tax was significantly different from the model without it. The alternative hypothesis for the F-test is that at least one additional slope(in the full model) is not equal to 0. The test resulted in a p-value of 0.006, therefore the null hypothesis is rejected at the 95% significance level and the two models are significantly different from each other. Since the partial F-test concludes that the model with tax^2 is a better model, the variable is included in the final model.
+
+
+
+```{r, echo = FALSE, figure.align = "right"}
+############################
+## Step 3: Model Building ##
+############################
+
+#install.packages("memisc")
+#install.packages('pander')
+library("memisc", quietly = T)
+library("pander", quietly = T)
+
+## since age and manufacturing are have correlation issues with a number of variables, drop
+#model.all <- lm(GINI~age+tax+savings+unemp+income+edu, data = data)
+#summary(model.all)                 #r2 = 0.45, age,tax,income,andeducation are the only significant 
+#model.drop <- lm(GINI~age+tax+unemp+income+edu, data = data) #r2 = 0.44 everything but tax significant
+#summary(model.drop.3)
+
+
+##### Transformation ####### 
+
+# Transform income and tax to see if R2 can be improved
+data <- data.frame(data, (data$tax)^2, log(data$income))   #tax and GINI seem curvilinear
+colnames(data)[11:12] <- c("tax.2", "logincome")
+
+# Plots to show changes in relationship 
+par(mfrow = c(1,2), mar = c(4,3,3,1.5)+0.5)
+plot(data$GINI, data$tax, main = "Gini VS. Tax(%)", col = "#99000070", xlab = "tax", ylab = "gini", las = T)
+plot(data$GINI, data$tax.2, main = "Gini VS. Tax Squared(%)", col = "#99000070", xlab = "tax^2", ylab = "gini", las = T)
+
+par(mfrow = c(1,2), mar = c(4,3,3,1.5)+0.1)
+hist(data$logincome, main = "Distribution of Log of Income", las = T, xlab = "Natural Log of GNI/Capita", col = "light yellow")
+qqnorm(data$logincome, main = "Log Income QQ Plot", las = T, ylab = "Log Income quantiles")
+qqline(data$logincome)
+
+mlr.final <- lm(GINI~age+tax.2+logincome+edu, data = data)
+#summary(mlr.final)
+
+# Model without tax ^2 
+mlr.partial <- lm(GINI~age+edu+logincome, data = data)
+#summary(mlr.partial)
+
+## Partial F-Test
+#anova(mlr.partial, mlr.final)
+
+final.table <- mtable('final model' = mlr.final, 'compared model' = mlr.partial, summary.stats = c("adj. R-squared", "sigma", "F", "p"))
+
+
+```
+
+## Regression Assumptions 
+
+Assumption 1, Collection of X: X is not fixed and all data are estimates therefore there is a chance of measurement error.
+
+Assumption 2, Linearity and Constant Variance: There are no nonlinear trends in the overall stardardized residual plot of the model. The overall model plot does not show a difference in variance therefore the constant variance assumption holds for the overall model. All of the variables' standarized residual plots hold up this assumption except for the age variable. The error term does not have a constant variance for this variable.
+
+Assumption 3 The mean of the error term is 0: This assumption is satisfied the regression method.
+
+Assumption 4 Error term is normally distributed: From the Normal Quantile plot of the standardized residuals, they are normally distributed but are slightly heavy tailed at the end. overall, the assumption holds.
+
+Calculating cook's distance revealed that there are no points with a cook's distance over 1. Therefore, using the general rule of thumb there are no influential points to cause concern.
+```{r, echo=FALSE}
+####################################
+## Step 4: Regression Assumptions ##
+####################################
+
+#Scatterplots of chosen variables
+#plot(data$logincome, data$GINI, main = "GINI & Log Income", col = "#99000070", las = T, pch = 19)
+#plot(data$income, data$GINI, main = "GINI & Income", col = "#99000070", las = T, pch = 19)
+#plot(data$age, data$GINI, main = "GINI & Age", col = "#99000070", las = T, pch = 19)
+#plot(data$unemp, data$GINI, main = "GINI & Unemployment", col = "#99000070", las = T, pch = 19)
+#plot(data$edu, data$GINI, main = "GINI & Education", col = "#99000070", las = T, pch = 19)
+
+#Linear relationship and constant variance assumption of variables: 
+# standardized residuals vs. y.hat
+plot(mlr.final$fitted.values, rstandard(mlr.final), las=T, main="Std. Residuals vs. Fitted Values",
+     ylab="standardized residuals", xlab="fitted values ",
+     cex.main=1.3, cex.lab=1.3, cex.axis=1.3)
+abline(h=0, lty=2, col="gray50")
+
+# standardized residuals vs. each x variable
+plot(data$age, rstandard(mlr.final), las=T, main="Std. Residuals vs. Age Dependany Ratio", ylab="standardized residuals", xlab="Age Dependancy Ration")
+abline(h=0, lty=2, col="gray50")
+#plot(data$edu, rstandard(mlr.final), las=T, main="Std. Residuals vs. Gross enrollment Ratio", ylab="standardized residuals", xlab="Gross enrollment Ratio")
+#abline(h=0, lty=2, col="gray50")
+#plot(data$tax.2, rstandard(mlr.final), las=T, main="Std. Residuals vs. Square of Tax", ylab="standardized residuals", xlab="(Tax%)^2")
+#abline(h=0, lty=2, col="gray50")
+#plot(data$logincome, rstandard(mlr.final), las=T, main="Std. Residuals vs. log of income", ylab="standardized residuals", xlab="Unemployment", col = "#99000070")
+#abline(h=0, lty=2, col="gray50")
+
+#: Normality Assumption of Errors
+## Normal Quantile Plot
+plot(mlr.final, which =2,  main = "Normal Quantile Plot of std.Residuals")
+
+#Cook's Distance check 
+#cooks.distance(mlr.final)
+
+```
+
+## Discussion 
+
+A table of the results of the final model are included below, the model without the square of tax is also included for comparison purposes. The final model has 56 degrees of freedom and a residual standard error of 5.643 which is slightly lower than the model without tax squared which had residual standard error of 5.774. It passes the F-test for overall significance and all the slopes and the intercept pass the t-test for individual significance. The final model has an adjusted R2 of 48.53%, which is higher than that of the model without the square of tax(Adj r2 = 42%). The final model can explain 48.53% of the variation in the Gini index while the rest of the 51.75% is caused by other factors not included in the model. The intercept of -7.065 makes no intuitive or mathematical sense even though it is significant. According to the model, if all other factors are held constant, an increase in the age dependency ratio of a population results in a 0.24% increase in income inequaloty. If all other factors are held constant, an increase in the Tax as a percentage of GDP of a country,  squared, has a 0.002% increase in the Gini Index. If all other factors are held constant, a 1% increase in GNI per capita will lead to a 1.9% decrease in the Gini index. Lastly, if all other factors are held constant, a 1% increase in thr gross enrollment ratio will lead to a 0.44% increase in the Gini index.
+
+```{r, echo=FALSE, results='asis'}
+#install.packages("xtable")
+#library("xtable", quietly = TRUE)
+print(final.table)
+
+```
+
+These results are somewhat surprising. For instance, an increase in GNI per capita leading to a decrease in incom inequality(Gini) is to be expected however the effects of education are unexpected. According to this model, increasing the gross enrollment ratio actually increases income inequality in a given country. If the age dependency ratio increases so does income inequality which is to be expected because a larger ratio indicates a larger number of dependents. Lastly, according to this model increasing taxes also increases income inequality which defeats the wealth redistribution aspect of tax collection. 
+
+# Limitations and Next steps
+
+The limitations of this model are that the age variable violates the constant variance assumption and the countries included in the sample are not representative of all world economies. Since only 61 countries were used, the sample is unbalanced and countries of all income groups (high, middle, low) are not equally represented. A way to improve this model would be to use data from multiple years in so more countries are represented and more applicable predictions can be made. Additionaly, since services and manufacturing as is could not be used, perhaps including them as a percentage or in current USD could reveal a diferent trend.
+
+
+
+
+
+
+# References
+
+Cloninger, DaleProfessor Emeritus, Economics & Finance, University of Houston-Clear Lake. "What Factors Influence Income Inequality?" The Conversation, 21 Feb. 2018, theconversation.com/what-factors-influence-income-inequality-61837.
+
+"World Bank Open Data." World Bank Open Data | Data, data.worldbank.org/.
+
+"Breaking the Camel's Back." The Economist, The Economist Newspaper, 4 Oct. 2014, www.economist.com/news/finance-and-economics/21621908-what-impressive-work-economic-history-tells-you-about-inequality-breaking.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
